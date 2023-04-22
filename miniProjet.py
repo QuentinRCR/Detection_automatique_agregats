@@ -53,24 +53,25 @@ morphedImage = cv2.morphologyEx(cleanedEqualizedImage, cv2.MORPH_OPEN, np.ones((
 plt.subplot(223,title="morphed open Image")
 plt.imshow(morphedImage,"gray")
 
+# uniformize blobs to avoid noise
 plt.subplot(224,title="blured image")
 bluedImage = ski.filters.gaussian(morphedImage,2)
 plt.imshow(bluedImage,"gray")
 
 plt.figure()
 
-morphedImage = cv2.morphologyEx(bluedImage, cv2.MORPH_CLOSE, np.ones((2,2), np.uint8))
-plt.subplot(221)
-plt.imshow(morphedImage,"gray")
-
+#make the image binary
 threshold=ski.filters.threshold_otsu(bluedImage)
 binaryImage = bluedImage>threshold
-plt.subplot(222,title="binary image")
+plt.subplot(221,title="binary image")
 binaryImage = binaryImage.astype(np.uint8) #transorm it to uint8
 binaryImage[binaryImage==True]=255
 plt.imshow(binaryImage,"gray")
 
-
+#remove noise with median filter
+medianImage = ski.filters.median(binaryImage,ski.morphology.disk(10) )
+plt.subplot(222)
+plt.imshow(medianImage,"gray")
 
 
 
