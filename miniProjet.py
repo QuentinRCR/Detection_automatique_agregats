@@ -74,35 +74,26 @@ plt.subplot(222)
 plt.imshow(medianImage,"gray")
 
 
+contours,hierarchy = cv2.findContours(medianImage, 1, 2)
+# cnt = contours[0]
+# M = cv2.moments(cnt)
+# print( M )
+img1=cv2.cvtColor(medianImage,cv2.COLOR_GRAY2RGB)
 
-
-'''''''''
-#blure the image to avoid part of the noise
-bluredImage = ski.filters.gaussian(cleanedImage,1)
-bluredImage=ski.exposure.equalize_hist(bluredImage)
-
-plt.subplot(223,title='cleaned blured equalized image')
-plt.imshow(bluredImage,"gray")
-
-# cleanedImage = cv2.morphologyEx(cleanedImage, cv2.MORPH_CLOSE,np.ones((5,5),np.uint8))
-
-plt.subplot(224,title='binary image')
-threshold = ski.filters.threshold_local(cleanedImage,101) #101 is the size of the smallest things on the image
-binaryImage = cleanedImage>threshold
-binaryImage = binaryImage.astype(np.uint8)
-binaryImage[binaryImage==True]=255
-plt.imshow(binaryImage, "gray")
+for i, cnt in enumerate(contours):
+   M = cv2.moments(cnt)
+   if M['m00'] != 0.0:
+      x1 = int(M['m10']/M['m00'])
+      y1 = int(M['m01']/M['m00'])
+   area = cv2.contourArea(cnt)
+   perimeter = cv2.arcLength(cnt, True)
+   perimeter = round(perimeter, 4)
+   print(f'Area of contour {i+1}:', area)
+   print(f'Perimeter of contour {i+1}:', perimeter)
+   img1 = cv2.drawContours(img1, [cnt], -1, (0,255,255), 3)
+   cv2.putText(img1, f'Area :{area}', (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+   cv2.putText(img1, f'Perimeter :{perimeter}', (x1, y1+20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
 plt.figure()
-
-# tranforme binary image
-closedImage = cv2.dilate(binaryImage,np.ones((2,2),np.uint8),iterations = 1)
-
-# closedImage = cv2.morphologyEx(binaryImage, cv2.MORPH_OPEN,np.ones((1,1),np.uint8))
-# closedImage = cv2.morphologyEx(binaryImage, cv2.MORPH_CLOSE,np.ones((5,5),np.uint8))
-# closedImage = cv2.morphologyEx(binaryImage, cv2.MORPH_GRADIENT,np.ones((5,5),np.uint8))
-
-# plt.subplot(224,title="closed image")
-plt.imshow(closedImage,"gray")
-'''''''''
+plt.imshow(img1)
 plt.show()
