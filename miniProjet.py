@@ -53,9 +53,9 @@ morphedImage = cv2.morphologyEx(cleanedEqualizedImage, cv2.MORPH_OPEN, np.ones((
 plt.subplot(223,title="morphed open Image")
 plt.imshow(morphedImage,"gray")
 
-# uniformize blobs to avoid noise
+# uniformize blobs to avoid noise and bloobs fusions with filter
 plt.subplot(224,title="blured image")
-bluedImage = ski.filters.gaussian(morphedImage,2)
+bluedImage = ski.filters.gaussian(morphedImage,1)
 plt.imshow(bluedImage,"gray")
 
 plt.figure()
