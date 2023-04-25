@@ -77,7 +77,7 @@ for imageName in listOfImageNames:
 
     #if the luminosity filter in not yet saved, create it
     if(not os.path.isfile("filters/luminosityFilter.bmp")):
-        generateFilter(imageInputDirectory,listImages,imageShape)
+        generateFilter(imageInputDirectory,listOfImageNames,imageShape)
 
     filters = ski.io.imread("filters/luminosityFilter.bmp") #get filter from saved images
 
