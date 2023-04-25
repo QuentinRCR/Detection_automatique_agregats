@@ -7,18 +7,11 @@ import cv2
 
 def applyCleaningFilter(image,filter):
     filteredImage = image.astype(int)-filter.astype(int) #go into int32 to avoid overflow issues
-    # plt.hist(filteredImage.flatten(),255)
-    # plt.show()
-    # filteredImage[filteredImage>80]=80 #remove useless height values
-    # filteredImage[filteredImage < -30] = -30
-    # plt.hist(filteredImage.flatten(),256)
-    # plt.show()
-    mini = np.min(filteredImage)
-    maxi = np.max(filteredImage)
-    # return ski.exposure.equalize_hist(filteredImage,255)
-    # return ((filteredImage - mini) / (maxi - mini) * 255).astype(np.uint8) #streatch image to be between 0 and 255
+
+    #remove every negative values created by the filter and replace them by 0
     return np.maximum(filteredImage,np.zeros(filteredImage.shape)).astype(np.uint8)
 
+#generate the filter to remove the main noises. This filter is the sum of every images
 def generateFilter(listImages,imageShape):
     filter = np.zeros(imageShape, dtype=int)
     for imageName in listImages:
@@ -33,7 +26,7 @@ def generateFilter(listImages,imageShape):
 imageDirectory = "Sous_ensemble_test"
 listImages= [imageDirectory+"/"+nameImage for nameImage in os.listdir(imageDirectory)]
 numberImages = len(listImages)
-testImage= ski.io.imread(listImages[0])[:,:,0] #take only one component
+testImage= ski.io.imread(listImages[1])[:,:,0] #take only one component
 imageShape = testImage.shape[0:2]
 
 #if the luminosity filter in not yet saved, create it
@@ -41,16 +34,19 @@ if(not os.path.isfile("filters/luminosityFilter.bmp")):
     generateFilter(listImages,imageShape)
 
 filters = ski.io.imread("filters/luminosityFilter.bmp") #get filter from saved images
+
+#print original image to show evolution
 plt.subplot(221,title="original image")
 plt.imshow(testImage,"gray")
 
-plt.subplot(222,title='cleaned equalized image')
+#apply luminosity fiter and equalize image
 cleanedEqualizedImage = ski.exposure.equalize_hist(applyCleaningFilter(testImage, filters))
+plt.subplot(222,title='cleaned equalized image')
 plt.imshow(cleanedEqualizedImage, "gray")
 
-#remove a bit of noise on the image
+#remove a bit of noise on the image to have a darker background
 morphedImage = cv2.morphologyEx(cleanedEqualizedImage, cv2.MORPH_OPEN, np.ones((4,4), np.uint8))
-plt.subplot(223,title="morphed open Image")
+plt.subplot(223,title="darker background with morph open")
 plt.imshow(morphedImage,"gray")
 
 # uniformize blobs to avoid noise and bloobs fusions with filter
@@ -60,26 +56,29 @@ plt.imshow(bluedImage,"gray")
 
 plt.figure()
 
-#make the image binary
-threshold=ski.filters.threshold_otsu(bluedImage)
+#make the image binary with a local threshold
+threshold=ski.filters.threshold_local(bluedImage,301)
 binaryImage = bluedImage>threshold
 plt.subplot(221,title="binary image")
 binaryImage = binaryImage.astype(np.uint8) #transorm it to uint8
 binaryImage[binaryImage==True]=255
 plt.imshow(binaryImage,"gray")
 
-#remove noise with median filter
-medianImage = ski.filters.median(binaryImage,ski.morphology.disk(10) )
-plt.subplot(222)
+#remove small noise
+morphedBinaryImage = cv2.morphologyEx(binaryImage, cv2.MORPH_OPEN, np.ones((20, 20), np.uint8))
+plt.subplot(222, title="remove noise")
+plt.imshow(morphedBinaryImage,"gray")
+
+#smooth image with median filter
+medianImage = ski.filters.median(morphedBinaryImage,ski.morphology.disk(10) )
+plt.subplot(223,title="smoothed image")
 plt.imshow(medianImage,"gray")
 
-
+#find contours, areas and blobs
 contours,hierarchy = cv2.findContours(medianImage, 1, 2)
-# cnt = contours[0]
-# M = cv2.moments(cnt)
-# print( M )
-img1=cv2.cvtColor(medianImage,cv2.COLOR_GRAY2RGB)
+imageWithAreaAndPerimeter=cv2.cvtColor(medianImage, cv2.COLOR_GRAY2RGB)
 
+#diplay area on the image
 for i, cnt in enumerate(contours):
    M = cv2.moments(cnt)
    if M['m00'] != 0.0:
@@ -90,10 +89,20 @@ for i, cnt in enumerate(contours):
    perimeter = round(perimeter, 4)
    print(f'Area of contour {i+1}:', area)
    print(f'Perimeter of contour {i+1}:', perimeter)
-   img1 = cv2.drawContours(img1, [cnt], -1, (0,255,255), 3)
-   cv2.putText(img1, f'Area :{area}', (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-   cv2.putText(img1, f'Perimeter :{perimeter}', (x1, y1+20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+   imageWithAreaAndPerimeter = cv2.drawContours(imageWithAreaAndPerimeter, [cnt], -1, (0, 255, 255), 3)
+   cv2.putText(imageWithAreaAndPerimeter, f'Area :{area}', (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+   cv2.putText(imageWithAreaAndPerimeter, f'Perimeter :{perimeter}', (x1, y1 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
+
+plt.subplot(224,title='image with values')
+plt.imshow(imageWithAreaAndPerimeter)
 
 plt.figure()
-plt.imshow(img1)
+# plt.title("final comparison")
+plt.subplot(121,title="original image")
+plt.imshow(testImage,"gray")
+
+plt.subplot(122,title="threaded image")
+plt.imshow(imageWithAreaAndPerimeter,"gray")
+
 plt.show()
