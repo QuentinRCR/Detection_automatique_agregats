@@ -2,12 +2,13 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-valuesOutputDirectory = "AreaAndPerimeterValues/"
+valuesOutputDirectory = "OutputValues/"
 
 listOfImageNames = os.listdir(valuesOutputDirectory)
 
 areas=[]
 perimeters=[]
+# Read values from input files
 for valueFile in os.listdir(valuesOutputDirectory):
     with open(valuesOutputDirectory+valueFile, 'r') as f:
         fullFile = f.read()[:-2] #remove last \n
@@ -16,6 +17,9 @@ for valueFile in os.listdir(valuesOutputDirectory):
             values=elements.split(";")
             areas.append(values[0])
             perimeters.append(values[1])
+
+
+#Draw histograms
 
 plt.subplot(121,title='areas')
 areas=np.array(areas)
