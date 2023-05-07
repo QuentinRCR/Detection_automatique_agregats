@@ -21,11 +21,17 @@ for valueFile in os.listdir(valuesOutputDirectory):
 
 #Draw histograms
 
-plt.subplot(121,title='areas')
+plt.subplot(121,title='Areas distribution')
 areas=np.array(areas)
-plt.hist(areas.astype(float),20)
+plt.hist(areas.astype(float),200,density=True)
+plt.ticklabel_format(style='sci',scilimits=(-3,4),axis='both') #force scientific notation
+plt.xlabel("Pixels")
+plt.ylabel("Density")
 
-plt.subplot(122,title='perimeters')
+plt.subplot(122,title='Perimeters distribution')
 perimeters=np.array(perimeters)
-plt.hist(perimeters.astype(float),20)
+plt.hist(perimeters.astype(float),200,density=True)
+plt.ticklabel_format(style='sci',scilimits=(-3,4),axis='both') #force scientific notation
+plt.xlabel("Pixels")
+plt.ylabel("Density")
 plt.show()
